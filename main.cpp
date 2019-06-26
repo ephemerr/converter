@@ -26,12 +26,29 @@ void format_out(double val) {
     cout << fixed << val;
 }
 
+#include <sys/time.h>
+typedef unsigned long long timestamp_t;
+
+static timestamp_t get_timestamp () {
+  struct timeval now;
+  gettimeofday (&now, NULL);
+  return  now.tv_usec + (timestamp_t)now.tv_sec * 1000000;
+}
+
+timestamp_t t0,t1,t2;
+
+
 int main() {
+  t0 = get_timestamp();
+
   bool study = true;
   int chain_count = 0;
   string v1, v2, u1, u2, eq;
   while (cin >> v1 >> u1 >> eq >> v2 >> u2)  {
-    if (v2 == "?") study = false;
+    if (study && v2 == "?") {
+      study = false;
+      t1 = get_timestamp();
+    }
     if (study) {
       DEBUG_MSG ( v1 << u1 << eq << v2  << u2 );
       double val1 = stod(v1);
@@ -81,5 +98,7 @@ int main() {
       }
     }
   }
+  t2 = get_timestamp();
+  // cout << "study/parse: " << t1-t0 << " " << t2-t1 << "\n";
   return 0;
 }
