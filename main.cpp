@@ -70,33 +70,29 @@ int main() {
       DEBUG_MSG ( v1 << u1 << eq << v2  << u2 );
       double val1 = stod(v1);
       double val2 = stod(v2);
-      auto chain1 = unit_sys.find(u1);
-      auto chain2 = unit_sys.find(u2);
-      if (chain1 == unit_sys.end() && chain2 == unit_sys.end()) {
+      auto find1 = unit_sys.find(u1);
+      auto find2 = unit_sys.find(u2);
+      Unit * unit1 = find1 != unit_sys.end() ? &find1->second : NULL;
+      Unit * unit2 = find2 != unit_sys.end() ? &find2->second : NULL;
+      if (!unit1 && !unit2) {
         DEBUG_MSG ( "New chain " << chain_count);
         new_chain();
         insert_unit(u1,{chain_count-1,1});
         insert_unit(u2,{chain_count-1,val2/val1});
       } else {
-        if (chain1 == unit_sys.end()) {
-          auto old_chain = chain2->second.chain;
-          auto k = chain2->second.proportion;
-          DEBUG_MSG ( "New unit 1 " << old_chain << k);
-          insert_unit(u1,{old_chain,val1/val2*k});
-        } else if (chain2 == unit_sys.end()) {
-          auto old_chain = chain1->second.chain;
-          auto k = chain1->second.proportion;
-          DEBUG_MSG ( "New unit 2 " << old_chain << k);
-          insert_unit(u1,{old_chain,val2/val1*k});
-        } else if (chain1 != chain2){
-          DEBUG_MSG ( "Merge chains" << chain1->second.chain << " " << chain2->second.chain );
-          auto k1 = chain1->second.proportion;
-          auto k2 = chain2->second.proportion;
-          for (auto u: *chains[chain2->second.chain]) {
+        if (!unit1) {
+          DEBUG_MSG ( "New unit 1 " << unit2->chain << unit2->proportion);
+          insert_unit(u1,{unit2->chain, val1 / val2 * unit2->proportion});
+        } else if (!unit2) {
+          DEBUG_MSG ( "New unit 2 " << unit1->chain << unit1->proportion);
+          insert_unit(u1,{unit1->chain, val2 / val1 * unit1->proportion});
+        } else if (unit1->chain != unit2->chain){
+          DEBUG_MSG ( "Merge chains" << unit1->chain << " " << unit2->chain );
+          for (auto u: *chains[unit2->chain]) {
             auto unit = &u->second;
-            unit->chain = chain1->second.chain;
-            unit->proportion = unit->proportion / k2 * k1 * val2 / val1;
-            chains.erase(chain2->second.chain);
+            unit->chain = unit1->chain;
+            unit->proportion = unit->proportion / unit2->proportion * unit1->proportion * val2 / val1;
+            chains.erase(unit2->chain);
           }
         } else {
           DEBUG_MSG ( "Both units already present" );
@@ -105,19 +101,21 @@ int main() {
       }
     } else {
       double val1 = stod(v1);
-      auto chain1 = unit_sys.find(u1);
-      auto chain2 = unit_sys.find(u2);
-      if (chain1 == unit_sys.end() || chain2 == unit_sys.end()) {
+      auto find1 = unit_sys.find(u1);
+      auto find2 = unit_sys.find(u2);
+      Unit * unit1 = find1 != unit_sys.end() ? &find1->second : NULL;
+      Unit * unit2 = find2 != unit_sys.end() ? &find2->second : NULL;
+      if (!unit1 || !unit2) {
         DEBUG_MSG ( "Missing unit" );
         cout << "No conversion is possible." << "\n";
-      } else if (chain1->second.chain != chain2->second.chain) {
+      } else if (unit1->chain != unit2->chain) {
         DEBUG_MSG ( "Unconvertable units" );
         cout << "No conversion is possible." << "\n";
       } else {
-        auto prop1 = chain1->second.proportion;
-        auto prop2 = chain2->second.proportion;
+        auto prop1 = unit1->proportion;
+        auto prop2 = unit2->proportion;
         double val2 = val1/prop1*prop2;
-        DEBUG_MSG ( "prop1 " << prop1 << " prop2 " << prop2 << " val1 " << val1 << " chain " << chain1->second.chain);
+        DEBUG_MSG ( "prop1 " << prop1 << " prop2 " << prop2 << " val1 " << val1 << " chain " << unit1->chain);
         format_out(val1);
         cout << " " << u1 << " = ";
         format_out(val2);
