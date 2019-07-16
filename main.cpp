@@ -81,19 +81,33 @@ int main() {
         insert_unit(u2,{chain_count-1,val2/val1});
       } else {
         if (!unit1) {
-          DEBUG_MSG ( "New unit 1 " << unit2->chain << unit2->proportion);
+          DEBUG_MSG ( "New unit 1 " << unit2->chain << " " << unit2->proportion);
           insert_unit(u1,{unit2->chain, val1 / val2 * unit2->proportion});
         } else if (!unit2) {
-          DEBUG_MSG ( "New unit 2 " << unit1->chain << unit1->proportion);
+          DEBUG_MSG ( "New unit 2 " << unit1->chain << " " << unit1->proportion);
           insert_unit(u1,{unit1->chain, val2 / val1 * unit1->proportion});
         } else if (unit1->chain != unit2->chain){
           DEBUG_MSG ( "Merge chains" << unit1->chain << " " << unit2->chain );
-          for (auto u: *chains[unit2->chain]) {
+          auto vec1 = chains[unit1->chain];
+          auto vec2 = chains[unit2->chain];
+          for (auto u : *vec2) {
             auto unit = &u->second;
             unit->chain = unit1->chain;
             unit->proportion = unit->proportion / unit2->proportion * unit1->proportion * val2 / val1;
-            chains.erase(unit2->chain);
           }
+          vec1->insert(vec1->end(),vec2->begin(),vec2->end());
+          vec2->clear();
+          vec2->shrink_to_fit();
+#ifdef DEBUG
+          for (auto chain : chains) {
+            cout << "chain " << chain.first << ": ";
+            for (auto u : *chain.second) {
+              auto unit = &u->second;
+              cout << unit->chain << "|" << unit->proportion << " ";
+            }
+            cout << endl;
+          }
+#endif
         } else {
           DEBUG_MSG ( "Both units already present" );
           continue;
@@ -106,10 +120,10 @@ int main() {
       Unit * unit1 = find1 != unit_sys.end() ? &find1->second : NULL;
       Unit * unit2 = find2 != unit_sys.end() ? &find2->second : NULL;
       if (!unit1 || !unit2) {
-        DEBUG_MSG ( "Missing unit" );
+        DEBUG_MSG ( "Missing " << u1 << " " << unit1 << " " << u2 << " " << unit2);
         cout << "No conversion is possible." << "\n";
       } else if (unit1->chain != unit2->chain) {
-        DEBUG_MSG ( "Unconvertable units" );
+        DEBUG_MSG ( "Unconvertable " << u1 << " " << unit1->chain << " " << u2 << " " << unit2->chain);
         cout << "No conversion is possible." << "\n";
       } else {
         auto prop1 = unit1->proportion;
