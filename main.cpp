@@ -21,7 +21,9 @@ typedef map<string, Unit>::iterator UnitIterator;
 
 map<string, Unit> unit_sys;
 
-vector<vector<UnitIterator>*> chains;
+map<int, vector<UnitIterator>*> chains;
+
+int chain_count = 0;
 
 void insert_unit(const string& key, const Unit &unit) {
     auto ret = unit_sys.insert(pair<string, Unit>(key,unit));
@@ -31,7 +33,8 @@ void insert_unit(const string& key, const Unit &unit) {
 }
 
 void new_chain() {
-  chains.push_back(new vector<UnitIterator>);
+  chains.insert(pair<int, vector<UnitIterator>*>(chain_count,new vector<UnitIterator>));
+  chain_count++;
 }
 
 void format_out(double val) {
@@ -70,10 +73,10 @@ int main() {
       auto chain1 = unit_sys.find(u1);
       auto chain2 = unit_sys.find(u2);
       if (chain1 == unit_sys.end() && chain2 == unit_sys.end()) {
-        DEBUG_MSG ( "New chain " << chains.size());
+        DEBUG_MSG ( "New chain " << chain_count);
         new_chain();
-        insert_unit(u1,{(int)chains.size()-1,1});
-        insert_unit(u2,{(int)chains.size()-1,val2/val1});
+        insert_unit(u1,{chain_count-1,1});
+        insert_unit(u2,{chain_count-1,val2/val1});
       } else {
         if (chain1 == unit_sys.end()) {
           auto old_chain = chain2->second.chain;
@@ -93,7 +96,7 @@ int main() {
             auto unit = &u->second;
             unit->chain = chain1->second.chain;
             unit->proportion = unit->proportion / k2 * k1 * val2 / val1;
-            chains.erase(chains.begin() + chain2->second.chain);
+            chains.erase(chain2->second.chain);
           }
         } else {
           DEBUG_MSG ( "Both units already present" );

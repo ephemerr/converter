@@ -19,6 +19,8 @@ int main() {
   std::string line="", u2="";
 
   for(std::size_t n = 0; std::getline(file, line) && units.size() < 999; n++) {
+    std::uniform_int_distribution<> u2_dist(0,units.size()-1);
+
     if( !std::all_of( line.begin(), line.end(), islower )
         || line.find('\'') != std::string::npos
       ) continue;
@@ -30,7 +32,6 @@ int main() {
         u2 = line;
         continue;
       }
-      std::uniform_int_distribution<> u2_dist(0,units.size()-1);
       u2 = units[u2_dist(prng)];
     } else {
       units.push_back(u2);
@@ -39,10 +40,16 @@ int main() {
     auto v1 = percent(prng)*10 + 1;
     auto v2 = percent(prng)*10 + 1;
     auto &u1 = line;
+    if (percent(prng) <= 1) {
+      /// merge chains
+      u1 = units[u2_dist(prng)];
+    }
     std::cout << v1 << " " << u1 << " = " << v2 << " " << u2 << "\n";
     units.push_back(u1);
     u2 = "";
+
   }
+
   std::uniform_int_distribution<> rand_unit(0,units.size()-1);
   for(int i=0; i<99; i++) {
     auto u1 = units[rand_unit(prng)];
