@@ -87,13 +87,13 @@ int main() {
           insert_unit(u1,{old_chain,val2/val1*k});
         } else if (chain1 != chain2){
           DEBUG_MSG ( "Merge chains" << chain1->second.chain << " " << chain2->second.chain );
-          auto united_chain = chain1->second.chain;
           auto k1 = chain1->second.proportion;
           auto k2 = chain2->second.proportion;
           for (auto u: *chains[chain2->second.chain]) {
             auto unit = &u->second;
-            unit->chain = united_chain;
+            unit->chain = chain1->second.chain;
             unit->proportion = unit->proportion / k2 * k1 * val2 / val1;
+            chains.erase(chains.begin() + chain2->second.chain);
           }
         } else {
           DEBUG_MSG ( "Both units already present" );
