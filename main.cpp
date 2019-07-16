@@ -17,7 +17,22 @@ typedef struct {
   double proportion;
 } Unit;
 
+typedef map<string, Unit>::iterator UnitIterator;
+
 map<string, Unit> unit_sys;
+
+vector<vector<UnitIterator>*> chains;
+
+void insert_unit(const string& key, const Unit &unit) {
+    auto ret = unit_sys.insert(pair<string, Unit>(key,unit));
+    chains[unit.chain]->push_back(ret.first);
+    DEBUG_MSG ( "Insert unit " <<  key << " " << ret.second);
+
+}
+
+void new_chain() {
+  chains.push_back(new vector<UnitIterator>);
+}
 
 void format_out(double val) {
   if (val >= 1000000 || val < .1)
@@ -42,7 +57,6 @@ int main() {
   t0 = get_timestamp();
 
   bool study = true;
-  int chain_count = 0;
   string v1, v2, u1, u2, eq;
   while (cin >> v1 >> u1 >> eq >> v2 >> u2)  {
     if (study && v2 == "?") {
@@ -56,21 +70,31 @@ int main() {
       auto chain1 = unit_sys.find(u1);
       auto chain2 = unit_sys.find(u2);
       if (chain1 == unit_sys.end() && chain2 == unit_sys.end()) {
-        DEBUG_MSG ( "New chain " << chain_count );
-        chain_count++;
-        unit_sys[u1] = {chain_count-1,1};
-        unit_sys[u2] = {chain_count-1,val2/val1};
+        DEBUG_MSG ( "New chain " << chains.size());
+        new_chain();
+        insert_unit(u1,{(int)chains.size()-1,1});
+        insert_unit(u2,{(int)chains.size()-1,val2/val1});
       } else {
         if (chain1 == unit_sys.end()) {
           auto old_chain = chain2->second.chain;
           auto k = chain2->second.proportion;
           DEBUG_MSG ( "New unit 1 " << old_chain << k);
-          unit_sys[u1] = {old_chain,val1/val2*k};
+          insert_unit(u1,{old_chain,val1/val2*k});
         } else if (chain2 == unit_sys.end()) {
           auto old_chain = chain1->second.chain;
           auto k = chain1->second.proportion;
           DEBUG_MSG ( "New unit 2 " << old_chain << k);
-          unit_sys[u2] = {old_chain,val2/val1*k};
+          insert_unit(u1,{old_chain,val2/val1*k});
+        } else if (chain1 != chain2){
+          DEBUG_MSG ( "Merge chains" << chain1->second.chain << " " << chain2->second.chain );
+          auto united_chain = chain1->second.chain;
+          auto k1 = chain1->second.proportion;
+          auto k2 = chain2->second.proportion;
+          for (auto u: *chains[chain2->second.chain]) {
+            auto unit = &u->second;
+            unit->chain = united_chain;
+            unit->proportion = unit->proportion / k2 * k1 * val2 / val1;
+          }
         } else {
           DEBUG_MSG ( "Both units already present" );
           continue;
